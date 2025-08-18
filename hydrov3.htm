@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>微水力系統能源流動監控</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        #map {
+            height: 180px;
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .flow-chart {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            padding: 35px 20px;
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
+            border-radius: 15px;
+            margin: 15px 0;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            min-height: 280px;
+        }
+
+        .node {
+            text-align: center;
+            padding: 12px;
+            border: 3px solid #3498db;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 170px;
+            height: 260px;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            z-index: 10;
+        }
+
+        .node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-left: 40px solid #2980b9;
+            animation: flow 2s infinite ease-in-out;
+            z-index: 5;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        @keyframes flow {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.3; transform: scale(0.8); }
+        }
+
+        .arrow.first {
+            left: calc(170px + 12px + 20px); /* node width + padding + margin */
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .arrow.second {
+            right: calc(170px + 12px + 20px); /* node width + padding + margin */
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .chart-container {
+            height: 280px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #battery {
+            width: 50px;
+            height: 80px;
+            border: 3px solid #2c3e50;
+            border-radius: 5px;
+            position: relative;
+            margin: 10px auto;
+            background: #ecf0f1;
+        }
+
+        #battery-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            transition: height 0.8s ease, background-color 0.8s ease;
+            border-radius: 0 0 2px 2px;
+        }
+
+        #battery-head {
+            width: 20px;
+            height: 8px;
+            background: #2c3e50;
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px 2px 0 0;
+        }
+
+        .data-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 18px;
+            border-radius: 15px;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .real-time-data {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .data-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .data-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-item label {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .data-item span {
+            font-size: 18px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        h2, p, span {
+            font-weight: bold;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            flex: 1;
+            margin: 0 20px;
+        }
+
+        .vendor-logo {
+            max-height: 70px;
+            width: auto;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .waesco-logo {
+            max-height: 150px;
+            width: auto;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .refresh-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            justify-content: space-between;
+            background: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .update-time {
+            font-size: 14px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .middle-section {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .flow-chart {
+            flex: 1;
+            min-width: 600px;
+        }
+
+        .data-box {
+            flex: 1;
+            max-width: 400px;
+            min-width: 350px;
+        }
+
+        .grid {
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online {
+            background-color: #28a745;
+        }
+
+        .status-warning {
+            background-color: #ffc107;
+        }
+
+        .status-error {
+            background-color: #dc3545;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .middle-section {
+                flex-direction: column;
+            }
+
+            .flow-chart {
+                min-width: 100%;
+                padding: 20px 10px;
+            }
+
+            .node {
+                width: 120px;
+                height: 200px;
+                padding: 10px;
+            }
+
+            .arrow.first {
+                left: calc(120px + 10px + 15px);
+            }
+
+            .arrow.second {
+                right: calc(120px + 10px + 15px);
+            }
+
+            .real-time-data {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .vendor-logo, .waesco-logo {
+                max-height: 50px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
+    <div class="container mx-auto p-4">
+        <div class="header">
+            <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/rihding-logo-01.svg" alt="Vendor Logo" class="vendor-logo">
+            <h1>微水力系統能源流動監控</h1>
+            <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/WAESCO_LAB_Logo2-removebg.png" alt="WAESCO Lab Logo" class="waesco-logo">
+        </div>
+
+        <div class="refresh-controls">
+            <div class="flex items-center gap-3">
+                <span class="status-indicator status-online"></span>
+                <label for="modeSelect">模式：</label>
+                <select id="modeSelect" class="px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="demo">展示模式</option>
+                    <option value="thingspeak">ThingSpeak模式</option>
+                    <option value="mssql">MSSQL模式</option>
+                </select>
+                <label for="refreshInterval">自動刷新間隔：</label>
+                <select id="refreshInterval" class="px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="5000">5秒</option>
+                    <option value="10000">10秒</option>
+                    <option value="30000">30秒</option>
+                    <option value="60000">60秒</option>
+                </select>
+                <button id="forceRefresh" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">強制刷新</button>
+            </div>
+            <div class="update-time">更新時間: <span id="updateTime">2025-08-14 18:27:00</span> (CST)</div>
+        </div>
+
+        <div id="thingspeakConfig" class="bg-white p-4 rounded-lg shadow mb-4" style="display: none;">
+            <h3 class="text-lg font-semibold mb-2">ThingSpeak 配置</h3>
+            <div class="flex flex-col gap-2">
+                <label for="channelId">Channel ID:</label>
+                <input id="channelId" type="text" class="px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入 ThingSpeak Channel ID">
+                <label for="apiKey">Read API Key:</label>
+                <input id="apiKey" type="text" class="px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入 Read API Key">
+                <label class="text-sm text-gray-600">假設 ThingSpeak fields 對應：field1: power (kW), field2: soc (%), field3: batteryPower (W), field4: flowSpeed (m/s), field5: waterLevel (m), field6: voltage (V), field7: current (A)</label>
+                <button id="saveThingspeakConfig" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">保存配置</button>
+            </div>
+        </div>
+
+        <div id="mssqlConfig" class="bg-white p-4 rounded-lg shadow mb-4" style="display: none;">
+            <h3 class="text-lg font-semibold mb-2">MSSQL 配置</h3>
+            <div class="flex flex-col gap-2">
+                <label for="mssqlServer">伺服器地址:</label>
+                <input id="mssqlServer" type="text" class="px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入 MSSQL 伺服器地址 (如 localhost)">
+                <label for="mssqlDatabase">資料庫名稱:</label>
+                <input id="mssqlDatabase" type="text" class="px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入資料庫名稱">
+                <label for="mssqlUser">使用者名稱:</label>
+                <input id="mssqlUser" type="text" class="px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入使用者名稱">
+                <label for="mssqlPassword">密碼:</label>
+                <input id="mssqlPassword" type="password" class="px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入密碼">
+                <label for="mssqlTable">資料表名稱:</label>
+                <input id="mssqlTable" type="text" class="px-3 py-2 border border-gray-300 rounded-lg" placeholder="輸入資料表名稱">
+                <label class="text-sm text-gray-600">假設資料表欄位對應：power (kW), soc (%), batteryPower (W), flowSpeed (m/s), waterLevel (m), voltage (V), current (A)</label>
+                <button id="saveMssqlConfig" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">保存配置</button>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="middle-section">
+            <div class="flow-chart">
+                <div class="node">
+                    <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/hydro-power.png" alt="Hydro" style="width: 80px; height: 80px; margin: 0;">
+                    <p style="font-size: 16px; color: #2c3e50; margin: 5px 0;">微水力發電機</p>
+                    <div style="font-size: 14px; color: #7f8c8d;">發電量</div>
+                    <p style="font-size: 20px; color: #e74c3c; font-weight: bold;"><span id="power">1.5 kW</span></p>
+                </div>
+
+                <div class="arrow first"></div>
+
+                <div class="node">
+                    <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/home-control.png" alt="House" style="width: 60px; height: 60px; margin: 0;">
+                                        <p style="font-size: 16px; color: #2c3e50; margin: 5px 0;">中控室</p>
+                    <div id="battery">
+                        <div id="battery-head"></div>
+                        <div id="battery-fill" style="height: 87%;"></div>
+                    </div>
+                    <div style="font-size: 12px; color: #7f8c8d;">電池狀態</div>
+                    <p style="font-size: 16px; color: #27ae60; font-weight: bold;"><span id="soc">87%</span></p>
+                    <p style="font-size: 12px; color: #7f8c8d;">(<span id="batteryPower">662 W</span>)</p>
+                </div>
+
+                <div class="arrow second"></div>
+
+                <div class="node">
+                    <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/electric-appliances.png" alt="Load" style="width: 90px; height: 90px; margin: 0;">
+                    <p style="font-size: 16px; color: #2c3e50; margin: 5px 0;">負載設備</p>
+                    <div style="font-size: 14px; color: #7f8c8d;">用電量</div>
+                    <p style="font-size: 20px; color: #f39c12; font-weight: bold;">250 W</p>
+                </div>
+            </div>
+
+            <div class="data-box">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">📊 即時數據監控</h2>
+                <div class="real-time-data">
+                    <div class="data-item">
+                        <label>💧 水流速度:</label>
+                        <span id="flowSpeed">2.5 m/s</span>
+                    </div>
+                    <div class="data-item">
+                        <label>⚡ 發電功率:</label>
+                        <span id="powerDisplay">1.5 kW</span>
+                    </div>
+                    <div class="data-item">
+                        <label>📏 水位高度:</label>
+                        <span id="waterLevel">3.8 m</span>
+                    </div>
+                    <div class="data-item">
+                        <label>🔋 系統電壓:</label>
+                        <span id="voltage">24.5 V</span>
+                    </div>
+                    <div class="data-item">
+                        <label>🔌 輸出電流:</label>
+                        <span id="current">10.2 A</span>
+                    </div>
+                    <div class="data-item">
+                        <label>🔋 電池容量(SOC):</label>
+                        <span id="socDisplay">87%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="chart-container">
+                <h2 class="text-lg font-semibold mb-4 text-gray-700">發電量趨勢圖</h2>
+                <canvas id="powerChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2 class="text-lg font-semibold mb-4 text-gray-700">電池SOC趨勢圖</h2>
+                <canvas id="socChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化地圖
+        let map = L.map('map').setView([25.05042495, 121.2570054], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker = L.marker([25.05042495, 121.2570054], {
+            icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            })
+        }).addTo(map).bindPopup('微水力發電站位置');
+
+        // 初始化 Chart.js 圖表
+        const chartConfig = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: '時間',
+                        font: { size: 14 }
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                }
+            },
+            elements: {
+                line: {
+                    tension: 0.4
+                },
+                point: {
+                    radius: 3,
+                    hoverRadius: 6
+                }
+            }
+        };
+
+        let powerChart = new Chart(document.getElementById("powerChart"), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: '發電量 (kW)',
+                    data: [],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    fill: true,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    ...chartConfig.scales,
+                    y: {
+                        ...chartConfig.scales.y,
+                        title: {
+                            display: true,
+                            text: 'kW',
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            }
+        });
+
+        let socChart = new Chart(document.getElementById("socChart"), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'SOC (%)',
+                    data: [],
+                    borderColor: '#27ae60',
+                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                    fill: true,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                ...chartConfig,
+                scales: {
+                    ...chartConfig.scales,
+                    y: {
+                        ...chartConfig.scales.y,
+                        title: {
+                            display: true,
+                            text: '%',
+                            font: { size: 14 }
+                        },
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // 模式與配置
+        let mode = 'demo';
+        let thingspeakChannelId = '';
+        let thingspeakApiKey = '';
+        let mssqlConfig = {
+            server: '',
+            database: '',
+            user: '',
+            password: '',
+            table: ''
+        };
+        const DEMO_API_URL = 'http://localhost:3000/api/data';
+        let lastData = null;
+        let connectionStatus = true;
+
+        // 更新狀態指示器
+        function updateStatusIndicator(online) {
+            const indicator = document.querySelector('.status-indicator');
+            if (online) {
+                indicator.className = 'status-indicator status-online';
+            } else {
+                indicator.className = 'status-indicator status-error';
+            }
+            connectionStatus = online;
+        }
+
+        // 更新電池顏色
+        function updateBatteryColor(soc) {
+            const batteryFill = document.getElementById('battery-fill');
+            if (soc < 20) {
+                batteryFill.style.backgroundColor = '#e74c3c';
+            } else if (soc <= 50) {
+                batteryFill.style.backgroundColor = '#f39c12';
+            } else if (soc <= 80) {
+                batteryFill.style.backgroundColor = '#f1c40f';
+            } else {
+                batteryFill.style.backgroundColor = '#27ae60';
+            }
+        }
+
+        // 清空數據
+        function clearData() {
+            powerChart.data.labels = [];
+            powerChart.data.datasets[0].data = [];
+            powerChart.update();
+            socChart.data.labels = [];
+            socChart.data.datasets[0].data = [];
+            socChart.update();
+            lastData = null;
+
+            // 重置顯示值為預設或空白
+            document.getElementById('power').textContent = '0 kW';
+            document.getElementById('powerDisplay').textContent = '0 kW';
+            document.getElementById('soc').textContent = '0%';
+            document.getElementById('socDisplay').textContent = '0%';
+            document.getElementById('batteryPower').textContent = '0 W';
+            document.getElementById('flowSpeed').textContent = '0 m/s';
+            document.getElementById('waterLevel').textContent = '0 m';
+            document.getElementById('voltage').textContent = '0 V';
+            document.getElementById('current').textContent = '0 A';
+            const batteryFill = document.getElementById('battery-fill');
+            batteryFill.style.height = '0%';
+            updateBatteryColor(0);
+        }
+
+        // 更新數據的函數
+        async function updateData() {
+            let apiUrl = DEMO_API_URL;
+            let isThingspeak = false;
+            let isMssql = false;
+
+            if (mode === 'thingspeak') {
+                if (!thingspeakChannelId || !thingspeakApiKey) {
+                    alert('請先配置 ThingSpeak Channel ID 和 API Key');
+                    return;
+                }
+                apiUrl = `https://api.thingspeak.com/channels/${thingspeakChannelId}/feeds/last.json?api_key=${thingspeakApiKey}`;
+                isThingspeak = true;
+            } else if (mode === 'mssql') {
+                if (!mssqlConfig.server || !mssqlConfig.database || !mssqlConfig.user || !mssqlConfig.table) {
+                    alert('請先配置 MSSQL 伺服器地址、資料庫名稱、使用者名稱和資料表名稱');
+                    return;
+                }
+                apiUrl = '/api/mssql'; // 假設後端提供 MSSQL API 端點
+                isMssql = true;
+            }
+
+            try {
+                let response;
+                let data;
+
+                if (isMssql) {
+                    // MSSQL 需要後端 API 支援
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            server: mssqlConfig.server,
+                            database: mssqlConfig.database,
+                            user: mssqlConfig.user,
+                            password: mssqlConfig.password,
+                            table: mssqlConfig.table
+                        })
+                    });
+                } else {
+                    response = await fetch(apiUrl);
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const rawData = await response.json();
+
+                if (isThingspeak) {
+                    data = {
+                        power: parseFloat(rawData.field1) || 0,
+                        soc: parseInt(rawData.field2) || 0,
+                        batteryPower: parseInt(rawData.field3) || 0,
+                        flowSpeed: parseFloat(rawData.field4) || 0,
+                        waterLevel: parseFloat(rawData.field5) || 0,
+                        voltage: parseFloat(rawData.field6) || 0,
+                        current: parseFloat(rawData.field7) || 0
+                    };
+                } else if (isMssql) {
+                    // 假設後端返回的數據格式與其他模式一致
+                    data = rawData;
+                } else {
+                    data = rawData;
+                }
+
+                updateStatusIndicator(true);
+
+                if (data) {
+                    const newPower = parseFloat(data.power) || 0;
+                    const newSoc = parseInt(data.soc) || 0;
+                    const batteryPower = parseInt(data.batteryPower) || 0;
+                    const flowSpeed = parseFloat(data.flowSpeed) || 0;
+                    const waterLevel = parseFloat(data.waterLevel) || 0;
+                    const voltage = parseFloat(data.voltage) || 0;
+                    const current = parseFloat(data.current) || 0;
+
+                    // 更新顯示數據
+                    document.getElementById('power').textContent = newPower.toFixed(1) + ' kW';
+                    document.getElementById('powerDisplay').textContent = newPower.toFixed(1) + ' kW';
+                    document.getElementById('soc').textContent = newSoc + '%';
+                    document.getElementById('socDisplay').textContent = newSoc + '%';
+                    document.getElementById('batteryPower').textContent = batteryPower + ' W';
+                    document.getElementById('flowSpeed').textContent = flowSpeed.toFixed(1) + ' m/s';
+                    document.getElementById('waterLevel').textContent = waterLevel.toFixed(1) + ' m';
+                    document.getElementById('voltage').textContent = voltage.toFixed(1) + ' V';
+                    document.getElementById('current').textContent = current.toFixed(1) + ' A';
+
+                    // 更新電池顯示
+                    const batteryFill = document.getElementById('battery-fill');
+                    batteryFill.style.height = newSoc + '%';
+                    updateBatteryColor(newSoc);
+
+                    // 檢查數據是否有更新
+                    const isDataUpdated = !lastData ||
+                        newPower !== parseFloat(lastData.power) ||
+                        newSoc !== parseInt(lastData.soc) ||
+                        batteryPower !== parseInt(lastData.batteryPower) ||
+                        flowSpeed !== parseFloat(lastData.flowSpeed) ||
+                        waterLevel !== parseFloat(lastData.waterLevel) ||
+                        voltage !== parseFloat(lastData.voltage) ||
+                        current !== parseFloat(lastData.current);
+
+                    if (isDataUpdated) {
+                        const currentTime = new Date().toLocaleTimeString('zh-TW', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        });
+
+                        // 更新圖表
+                        powerChart.data.labels.push(currentTime);
+                        powerChart.data.datasets[0].data.push(newPower);
+                        socChart.data.labels.push(currentTime);
+                        socChart.data.datasets[0].data.push(newSoc);
+
+                        // 限制數據點數量
+                        const maxDataPoints = 50;
+                        if (powerChart.data.labels.length > maxDataPoints) {
+                            powerChart.data.labels.shift();
+                            powerChart.data.datasets[0].data.shift();
+                            socChart.data.labels.shift();
+                            socChart.data.datasets[0].data.shift();
+                        }
+
+                        powerChart.update('none');
+                        socChart.update('none');
+                    }
+
+                    // 更新時間戳
+                    const updateTime = new Date().toLocaleString('zh-TW', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                    document.getElementById('updateTime').textContent = updateTime;
+                    lastData = { ...data };
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                updateStatusIndicator(false);
+
+                // 如果API不可用，使用模擬數據（僅在展示模式）
+                if (mode === 'demo') {
+                    generateSimulatedData();
+                }
+            }
+        }
+
+        // 生成模擬數據（用於演示）
+        function generateSimulatedData() {
+            const simulatedData = {
+                power: (Math.random() * 2 + 0.5).toFixed(1),
+                soc: Math.floor(Math.random() * 30 + 70),
+                batteryPower: Math.floor(Math.random() * 200 + 500),
+                flowSpeed: (Math.random() * 1 + 2).toFixed(1),
+                waterLevel: (Math.random() * 0.5 + 3.5).toFixed(1),
+                voltage: (Math.random() * 2 + 23.5).toFixed(1),
+                current: (Math.random() * 2 + 9).toFixed(1)
+            };
+
+            const newPower = parseFloat(simulatedData.power);
+            const newSoc = parseInt(simulatedData.soc);
+            const batteryPower = parseInt(simulatedData.batteryPower);
+            const flowSpeed = parseFloat(simulatedData.flowSpeed);
+            const waterLevel = parseFloat(simulatedData.waterLevel);
+            const voltage = parseFloat(simulatedData.voltage);
+            const current = parseFloat(simulatedData.current);
+
+            document.getElementById('power').textContent = newPower + ' kW';
+            document.getElementById('powerDisplay').textContent = newPower + ' kW';
+            document.getElementById('soc').textContent = newSoc + '%';
+            document.getElementById('socDisplay').textContent = newSoc + '%';
+            document.getElementById('batteryPower').textContent = batteryPower + ' W';
+            document.getElementById('flowSpeed').textContent = flowSpeed + ' m/s';
+            document.getElementById('waterLevel').textContent = waterLevel + ' m';
+            document.getElementById('voltage').textContent = voltage + ' V';
+            document.getElementById('current').textContent = current + ' A';
+
+            const batteryFill = document.getElementById('battery-fill');
+            batteryFill.style.height = newSoc + '%';
+            updateBatteryColor(newSoc);
+
+            const currentTime = new Date().toLocaleTimeString('zh-TW', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            powerChart.data.labels.push(currentTime);
+            powerChart.data.datasets[0].data.push(newPower);
+            socChart.data.labels.push(currentTime);
+            socChart.data.datasets[0].data.push(newSoc);
+
+            if (powerChart.data.labels.length > 50) {
+                powerChart.data.labels.shift();
+                powerChart.data.datasets[0].data.shift();
+                socChart.data.labels.shift();
+                socChart.data.datasets[0].data.shift();
+            }
+
+            powerChart.update('none');
+            socChart.update('none');
+
+            const updateTime = new Date().toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('updateTime').textContent = updateTime;
+        }
+
+        // 設置自動刷新
+        let refreshInterval = 15000;
+        let intervalId = setInterval(updateData, refreshInterval);
+
+        document.getElementById('refreshInterval').addEventListener('change', function() {
+            refreshInterval = parseInt(this.value);
+            clearInterval(intervalId);
+            intervalId = setInterval(updateData, refreshInterval);
+        });
+
+        document.getElementById('forceRefresh').addEventListener('click', function() {
+            this.textContent = '刷新中...';
+            this.disabled = true;
+            updateData().finally(() => {
+                this.textContent = '強制刷新';
+                this.disabled = false;
+            });
+        });
+
+        // 模式切換
+        document.getElementById('modeSelect').addEventListener('change', function() {
+            mode = this.value;
+            clearData(); // 切換時洗掉數據
+            if (mode === 'thingspeak') {
+                document.getElementById('thingspeakConfig').style.display = 'block';
+                document.getElementById('mssqlConfig').style.display = 'none';
+            } else if (mode === 'mssql') {
+                document.getElementById('thingspeakConfig').style.display = 'none';
+                document.getElementById('mssqlConfig').style.display = 'block';
+            } else {
+                document.getElementById('thingspeakConfig').style.display = 'none';
+                document.getElementById('mssqlConfig').style.display = 'none';
+            }
+            updateData();
+        });
+
+        // 保存 ThingSpeak 配置
+        document.getElementById('saveThingspeakConfig').addEventListener('click', function() {
+            thingspeakChannelId = document.getElementById('channelId').value.trim();
+            thingspeakApiKey = document.getElementById('apiKey').value.trim();
+            if (thingspeakChannelId && thingspeakApiKey) {
+                alert('ThingSpeak 配置已保存');
+                updateData();
+            } else {
+                alert('請輸入 Channel ID 和 API Key');
+            }
+        });
+
+        // 保存 MSSQL 配置
+        document.getElementById('saveMssqlConfig').addEventListener('click', function() {
+            mssqlConfig.server = document.getElementById('mssqlServer').value.trim();
+            mssqlConfig.database = document.getElementById('mssqlDatabase').value.trim();
+            mssqlConfig.user = document.getElementById('mssqlUser').value.trim();
+            mssqlConfig.password = document.getElementById('mssqlPassword').value.trim();
+            mssqlConfig.table = document.getElementById('mssqlTable').value.trim();
+            if (mssqlConfig.server && mssqlConfig.database && mssqlConfig.user && mssqlConfig.table) {
+                alert('MSSQL 配置已保存');
+                updateData();
+            } else {
+                alert('請輸入所有 MSSQL 配置欄位');
+            }
+        });
+
+        // 初始加載
+        updateData();
+    </script>
+</body>
+</html>
