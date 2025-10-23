@@ -1,3 +1,4 @@
 演示版為microrandom
 ts資料庫版為hydrotsver
 mssql資料庫版為hydromssql
+1023確定版為Hydro_ver2
