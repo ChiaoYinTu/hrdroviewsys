@@ -22,50 +22,97 @@
         }
 
         .flow-chart {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr;
+            gap: 15px;
             align-items: center;
             position: relative;
-            padding: 35px 20px;
+            padding: 20px;
             background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
             border-radius: 15px;
             margin: 15px 0;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            min-height: 280px;
         }
 
         .node {
             text-align: center;
-            padding: 12px;
+            padding: 15px;
             border: 3px solid #3498db;
-            border-radius: 15px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.95);
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
             align-items: center;
-            width: 170px;
-            min-height: 260px;
-            justify-content: space-between;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            z-index: 10;
+            min-height: 180px;
         }
 
         .node:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
         }
+        .node-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .node-content {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            gap: 8px;
+        }
 
+        .node-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        .node-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 4px 8px;
+            background: rgba(52, 152, 219, 0.08);
+            border-radius: 6px;
+            margin: 2px 0;
+        }
+
+        .node-metric-label {
+            font-size: 11px;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .node-metric-value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .node-main-value {
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
         .arrow {
-            position: absolute;
             width: 0;
             height: 0;
             border-top: 20px solid transparent;
             border-bottom: 20px solid transparent;
-            border-left: 40px solid #2980b9;
+            border-left: 35px solid #2980b9;
             animation: flow 2s infinite ease-in-out;
-            z-index: 5;
             filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+            justify-self: center;
         }
 
         @keyframes flow {
@@ -329,9 +376,9 @@
             }
 
             .flow-chart {
-                flex-direction: column;
-                gap: 20px;
-                padding: 20px 10px;
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
             }
 
             .arrow {
@@ -339,8 +386,21 @@
             }
 
             .node {
-                width: 100%;
-                max-width: 300px;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .node-icon {
+                justify-content: center;
+            }
+
+            .node-content {
+                text-align: center;
+            }
+
+            .node-metric {
+                justify-content: center;
+                gap: 8px;
             }
 
             .config-row {
@@ -419,50 +479,80 @@
             <div id="map"></div>
 
             <!-- Energy Flow Visualization -->
-            <div class="section-title">⚡ 能源流動視覺化</div>
-            <div class="flow-chart">
-                <div class="node">
-                    <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/hydro-power.png" alt="Hydro" style="width: 80px; height: 80px; margin: 0;">
-                    <p class="text-base font-bold text-gray-700 mb-2">微水力發電機</p>
-                    <div class="text-xs text-gray-500 mb-1">總發電量</div>
-                    <div class="text-xs text-gray-500 mb-1">Total Production</div>
-                    <p class="text-2xl font-bold text-red-600" id="flowProduction">0 W</p>
-                    <div class="mt-2 text-xs text-gray-500">
-                        <div>電壓(Voltage): <span id="flowInputV" class="font-bold">0V</span></div>
-                        <div>電流(Current): <span id="flowInputA" class="font-bold">0A</span></div>
-                    </div>
+<div class="section-title">⚡ 能源流動視覺化</div>
+<div class="flow-chart">
+    <!-- Hydro Power Node -->
+    <div class="node">
+        <div class="node-icon">
+            <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/hydro-power.png" alt="Hydro" style="width: 70px; height: 70px;">
+        </div>
+        <div class="node-content">
+            <div class="node-title">微水力發電機<br><span style="font-size: 11px; font-weight: normal;">Hydro Generator</span></div>
+            <div class="node-main-value" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c;">
+                <div style="font-size: 12px; font-weight: normal; color: #6c757d;">發電量 Production</div>
+                <span id="flowProduction">0 W</span>
+            </div>
+            <div class="node-metric">
+                <span class="node-metric-label">電壓 Voltage</span>
+                <span class="node-metric-value" id="flowInputV">0 V</span>
+            </div>
+            <div class="node-metric">
+                <span class="node-metric-label">電流 Current</span>
+                <span class="node-metric-value" id="flowInputA">0 A</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="arrow"></div>
+
+    <!-- Battery/Control Node -->
+    <div class="node">
+        <div class="node-icon">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/home-control.png" alt="House" style="width: 55px; height: 55px;">
+                <div id="battery">
+                    <div id="battery-head"></div>
+                    <div id="battery-fill"></div>
                 </div>
+            </div>
+        </div>
+        <div class="node-content">
+            <div class="node-title">中控室電池<br><span style="font-size: 11px; font-weight: normal;">Control & Battery</span></div>
+            <div class="node-main-value" style="background: rgba(39, 174, 96, 0.15); color: #27ae60;">
+                <div style="font-size: 12px; font-weight: normal; color: #6c757d;">電池狀態 SOC</div>
+                <span id="flowSOC">0%</span>
+            </div>
+            <div class="node-metric">
+                <span class="node-metric-label">電池電壓 Voltage</span>
+                <span class="node-metric-value" id="flowBatteryV">0 V</span>
+            </div>
+        </div>
+    </div>
 
-                <div class="arrow first"></div>
+    <div class="arrow"></div>
 
-                <div class="node">
-                    <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/home-control.png" alt="House" style="width: 60px; height: 60px; margin: 0;">
-                    <p class="text-base font-bold text-gray-700 mb-2">中控室</p>
-                    <div id="battery">
-                        <div id="battery-head"></div>
-                        <div id="battery-fill"></div>
-                    </div>
-                    <div class="text-xs text-gray-500 mb-1">電池狀態</div>
-                    <div class="text-xs text-gray-500 mb-1">Battery status</div>
-                    <p class="text-xl font-bold text-green-600" id="flowSOC">0%</p>
-                    <div class="text-xs text-gray-500">
-                        <span id="flowBatteryV" class="font-bold">0V</span>
-                    </div>
-                </div>
-
-                <div class="arrow second"></div>
-
-                <div class="node">
-                    <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/electric-appliances.png" alt="Load" style="width: 90px; height: 90px; margin: 0;">
-                    <p class="text-base font-bold text-gray-700 mb-2">負載設備</p>
-                    <div class="text-xs text-gray-500 mb-1">總用電量</div>
-                    <div class="text-xs text-gray-500 mb-1">Total Consumption</div>
-                    <p class="text-2xl font-bold text-orange-600" id="flowConsumption">0 W</p>
-                    <div class="mt-2 text-xs text-gray-500">
-                        <div>電壓(Voltage): <span id="flowOutputV" class="font-bold">0V</span></div>
-                        <div>電流(Current): <span id="flowOutputA" class="font-bold">0A</span></div>
-                    </div>
-                </div>
+    <!-- Load Node -->
+    <div class="node">
+        <div class="node-icon">
+            <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/electric-appliances.png" alt="Load" style="width: 75px; height: 75px;">
+        </div>
+        <div class="node-content">
+            <div class="node-title">負載設備<br><span style="font-size: 11px; font-weight: normal;">Load Equipment</span></div>
+            <div class="node-main-value" style="background: rgba(243, 156, 18, 0.15); color: #f39c12;">
+                <div style="font-size: 12px; font-weight: normal; color: #6c757d;">用電量 Consumption</div>
+                <span id="flowConsumption">0 W</span>
+            </div>
+            <div class="node-metric">
+                <span class="node-metric-label">電壓 Voltage</span>
+                <span class="node-metric-value" id="flowOutputV">0 V</span>
+            </div>
+            <div class="node-metric">
+                <span class="node-metric-label">電流 Current</span>
+                <span class="node-metric-value" id="flowOutputA">0 A</span>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
 
             <!-- Channel 1 Data Cards -->
