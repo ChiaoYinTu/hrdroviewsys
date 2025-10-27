@@ -424,19 +424,19 @@
             <div class="config-row">
                 <div class="config-group">
                     <label>Channel 1 ID (Power)</label>
-                    <input type="text" id="channelId1" placeholder="輸入 Channel 1 ID">
+                    <input type="text" id="channelId1" value="3122560" placeholder="輸入 Channel 1 ID">
                 </div>
                 <div class="config-group">
                     <label>Channel 1 API Key</label>
-                    <input type="text" id="apiKey1" placeholder="輸入 Read API Key">
+                    <input type="text" id="apiKey1" value="F9SLU0FUAX80SBEG" placeholder="輸入 Read API Key">
                 </div>
                 <div class="config-group">
                     <label>Channel 2 ID (Battery)</label>
-                    <input type="text" id="channelId2" placeholder="輸入 Channel 2 ID">
+                    <input type="text" id="channelId2" value="3122760" placeholder="輸入 Channel 2 ID">
                 </div>
                 <div class="config-group">
                     <label>Channel 2 API Key</label>
-                    <input type="text" id="apiKey2" placeholder="輸入 Read API Key">
+                    <input type="text" id="apiKey2" value="ZEAHYIAD98KGZG8G" placeholder="輸入 Read API Key">
                 </div>
             </div>
             <div class="config-row">
@@ -479,80 +479,79 @@
             <div id="map"></div>
 
             <!-- Energy Flow Visualization -->
-<div class="section-title">⚡ 能源流動視覺化</div>
-<div class="flow-chart">
-    <!-- Hydro Power Node -->
-    <div class="node">
-        <div class="node-icon">
-            <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/hydro-power.png" alt="Hydro" style="width: 70px; height: 70px;">
-        </div>
-        <div class="node-content">
-            <div class="node-title">微水力發電機<br><span style="font-size: 11px; font-weight: normal;">Hydro Generator</span></div>
-            <div class="node-main-value" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c;">
-                <div style="font-size: 12px; font-weight: normal; color: #6c757d;">發電量 Production</div>
-                <span id="flowProduction">0 W</span>
-            </div>
-            <div class="node-metric">
-                <span class="node-metric-label">電壓 Voltage</span>
-                <span class="node-metric-value" id="flowInputV">0 V</span>
-            </div>
-            <div class="node-metric">
-                <span class="node-metric-label">電流 Current</span>
-                <span class="node-metric-value" id="flowInputA">0 A</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="arrow"></div>
-
-    <!-- Battery/Control Node -->
-    <div class="node">
-        <div class="node-icon">
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/home-control.png" alt="House" style="width: 55px; height: 55px;">
-                <div id="battery">
-                    <div id="battery-head"></div>
-                    <div id="battery-fill"></div>
+            <div class="section-title">⚡ 能源流動視覺化</div>
+            <div class="flow-chart">
+                <!-- Hydro Power Node -->
+                <div class="node">
+                    <div class="node-icon">
+                        <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/hydro-power.png" alt="Hydro" style="width: 70px; height: 70px;">
+                    </div>
+                    <div class="node-content">
+                        <div class="node-title">微水力發電機<br><span style="font-size: 11px; font-weight: normal;">Hydro Generator</span></div>
+                        <div class="node-main-value" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c;">
+                            <div style="font-size: 12px; font-weight: normal; color: #6c757d;">發電量 Production</div>
+                            <span id="flowProduction">0 W</span>
+                        </div>
+                        <div class="node-metric">
+                            <span class="node-metric-label">電壓 Voltage</span>
+                            <span class="node-metric-value" id="flowInputV">0 V</span>
+                        </div>
+                        <div class="node-metric">
+                            <span class="node-metric-label">電流 Current</span>
+                            <span class="node-metric-value" id="flowInputA">0 A</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="node-content">
-            <div class="node-title">中控室電池<br><span style="font-size: 11px; font-weight: normal;">Control & Battery</span></div>
-            <div class="node-main-value" style="background: rgba(39, 174, 96, 0.15); color: #27ae60;">
-                <div style="font-size: 12px; font-weight: normal; color: #6c757d;">電池狀態 SOC</div>
-                <span id="flowSOC">0%</span>
-            </div>
-            <div class="node-metric">
-                <span class="node-metric-label">電池電壓 Voltage</span>
-                <span class="node-metric-value" id="flowBatteryV">0 V</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="arrow"></div>
+                <div class="arrow"></div>
 
-    <!-- Load Node -->
-    <div class="node">
-        <div class="node-icon">
-            <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/electric-appliances.png" alt="Load" style="width: 75px; height: 75px;">
-        </div>
-        <div class="node-content">
-            <div class="node-title">負載設備<br><span style="font-size: 11px; font-weight: normal;">Load Equipment</span></div>
-            <div class="node-main-value" style="background: rgba(243, 156, 18, 0.15); color: #f39c12;">
-                <div style="font-size: 12px; font-weight: normal; color: #6c757d;">用電量 Consumption</div>
-                <span id="flowConsumption">0 W</span>
-            </div>
-            <div class="node-metric">
-                <span class="node-metric-label">電壓 Voltage</span>
-                <span class="node-metric-value" id="flowOutputV">0 V</span>
-            </div>
-            <div class="node-metric">
-                <span class="node-metric-label">電流 Current</span>
-                <span class="node-metric-value" id="flowOutputA">0 A</span>
-            </div>
-        </div>
-    </div>
-</div>
+                <!-- Battery/Control Node -->
+                <div class="node">
+                    <div class="node-icon">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                            <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/home-control.png" alt="House" style="width: 55px; height: 55px;">
+                            <div id="battery">
+                                <div id="battery-head"></div>
+                                <div id="battery-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="node-content">
+                        <div class="node-title">中控室電池<br><span style="font-size: 11px; font-weight: normal;">Control & Battery</span></div>
+                        <div class="node-main-value" style="background: rgba(39, 174, 96, 0.15); color: #27ae60;">
+                            <div style="font-size: 12px; font-weight: normal; color: #6c757d;">電池狀態 SOC</div>
+                            <span id="flowSOC">0%</span>
+                        </div>
+                        <div class="node-metric">
+                            <span class="node-metric-label">電池電壓 Voltage</span>
+                            <span class="node-metric-value" id="flowBatteryV">0 V</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arrow"></div>
+
+                <!-- Load Node -->
+                <div class="node">
+                    <div class="node-icon">
+                        <img src="https://raw.githubusercontent.com/ChiaoYinTu/hrdroviewsys/main/electric-appliances.png" alt="Load" style="width: 75px; height: 75px;">
+                    </div>
+                    <div class="node-content">
+                        <div class="node-title">負載設備<br><span style="font-size: 11px; font-weight: normal;">Load Equipment</span></div>
+                        <div class="node-main-value" style="background: rgba(243, 156, 18, 0.15); color: #f39c12;">
+                            <div style="font-size: 12px; font-weight: normal; color: #6c757d;">用電量 Consumption</div>
+                            <span id="flowConsumption">0 W</span>
+                        </div>
+                        <div class="node-metric">
+                            <span class="node-metric-label">電壓 Voltage</span>
+                            <span class="node-metric-value" id="flowOutputV">0 V</span>
+                        </div>
+                        <div class="node-metric">
+                            <span class="node-metric-label">電流 Current</span>
+                            <span class="node-metric-value" id="flowOutputA">0 A</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Channel 1 Data Cards -->
@@ -668,10 +667,10 @@
 
     <script>
         let config = {
-            channelId1: '',
-            apiKey1: '',
-            channelId2: '',
-            apiKey2: '',
+            channelId1: '3122560',
+            apiKey1: 'F9SLU0FUAX80SBEG',
+            channelId2: '3122760',
+            apiKey2: 'ZEAHYIAD98KGZG8G',
             resultsCount: 50
         };
 
@@ -935,17 +934,38 @@
                 const data1 = await response1.json();
                 const data2 = await response2.json();
 
-                updateStatus(true);
+                // Check if data is recent (within 30 minutes)
+                const now = new Date();
+                let isOnline = false;
+                
+                if (data1.feeds && data1.feeds.length > 0) {
+                    const latestTimestamp1 = new Date(data1.feeds[data1.feeds.length - 1].created_at);
+                    const timeDiff1 = (now - latestTimestamp1) / 1000 / 60; // difference in minutes
+                    
+                    if (timeDiff1 <= 30) {
+                        isOnline = true;
+                    }
+                }
+                
+                if (data2.feeds && data2.feeds.length > 0) {
+                    const latestTimestamp2 = new Date(data2.feeds[data2.feeds.length - 1].created_at);
+                    const timeDiff2 = (now - latestTimestamp2) / 1000 / 60; // difference in minutes
+                    
+                    if (timeDiff2 <= 30 && !isOnline) {
+                        isOnline = true;
+                    }
+                }
+
+                updateStatus(isOnline);
                 updateAllData(data1, data2);
 
                 // Update timestamp
-                const now = new Date();
                 document.getElementById('updateTime').textContent = now.toLocaleTimeString('zh-TW');
 
             } catch (error) {
                 console.error('Error fetching data:', error);
                 updateStatus(false);
-                alert('無法從 ThingSpeak 獲取數據，請檢查您的配置');
+                alert('無法從 ThingSpeak 獲取數據,請檢查您的配置');
             }
         }
 
@@ -1099,7 +1119,12 @@
                 intervalId = setInterval(fetchData, refreshInterval);
             }
         });
+
+        // Auto-start monitoring on page load
+        window.addEventListener('load', function() {
+            // Wait a brief moment for everything to initialize
+            setTimeout(startMonitoring, 500);
+        });
     </script>
 </body>
 </html>
-
