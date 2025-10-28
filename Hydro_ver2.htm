@@ -455,7 +455,7 @@
         <div id="controlsBar" class="controls-bar hidden">
             <div class="flex items-center gap-3">
                 <span id="statusIndicator" class="status-indicator status-offline"></span>
-                <span class="text-sm font-bold text-gray-700">連線狀態: <span id="statusText">離線</span></span>
+                <span class="text-sm font-bold text-gray-700">Connection Status: <span id="statusText">Offline</span></span>
             </div>
             <div class="flex items-center gap-3">
                 <label class="text-sm font-bold text-gray-700">刷新間隔:</label>
@@ -479,7 +479,7 @@
             <div id="map"></div>
 
             <!-- Energy Flow Visualization -->
-            <div class="section-title">⚡ 能源流動視覺化</div>
+            <div class="section-title">⚡ 能源流動視覺化 Energy Flow Visualization</div>
             <div class="flow-chart">
                 <!-- Hydro Power Node -->
                 <div class="node">
@@ -517,13 +517,13 @@
                         </div>
                     </div>
                     <div class="node-content">
-                        <div class="node-title">中控室電池<br><span style="font-size: 11px; font-weight: normal;">Control & Battery</span></div>
+                        <div class="node-title">儲能系統<br><span style="font-size: 11px; font-weight: normal;">Energy Storage System</span></div>
                         <div class="node-main-value" style="background: rgba(39, 174, 96, 0.15); color: #27ae60;">
                             <div style="font-size: 12px; font-weight: normal; color: #6c757d;">電池狀態 SOC</div>
                             <span id="flowSOC">0%</span>
                         </div>
                         <div class="node-metric">
-                            <span class="node-metric-label">電池電壓 Voltage</span>
+                            <span class="node-metric-label">電池電壓 Battery Voltage</span>
                             <span class="node-metric-value" id="flowBatteryV">0 V</span>
                         </div>
                     </div>
@@ -697,7 +697,7 @@
                     iconAnchor: [12, 41],
                     popupAnchor: [1, -34]
                 })
-            }).addTo(map).bindPopup('微水力發電站位置');
+            }).addTo(map).bindPopup('Location');
         }
 
         // Initialize Charts
@@ -737,7 +737,7 @@
                     labels: [],
                     datasets: [
                         {
-                            label: '發電量 (W)',
+                            label: 'Production (W)',
                             borderColor: '#e74c3c',
                             backgroundColor: 'rgba(231, 76, 60, 0.1)',
                             data: [],
@@ -746,7 +746,7 @@
                             borderWidth: 2
                         },
                         {
-                            label: '用電量 (W)',
+                            label: 'Consumption (W)',
                             borderColor: '#f39c12',
                             backgroundColor: 'rgba(243, 156, 18, 0.1)',
                             data: [],
@@ -764,8 +764,8 @@
                 data: {
                     labels: [],
                     datasets: [
-                        { label: '輸入電壓 (V)', borderColor: '#3498db', data: [], tension: 0.4, borderWidth: 2 },
-                        { label: '輸出電壓 (V)', borderColor: '#9b59b6', data: [], tension: 0.4, borderWidth: 2 }
+                        { label: 'Input Voltage (V)', borderColor: '#3498db', data: [], tension: 0.4, borderWidth: 2 },
+                        { label: 'Output Voltage (V)', borderColor: '#9b59b6', data: [], tension: 0.4, borderWidth: 2 }
                     ]
                 },
                 options: chartConfig
@@ -806,7 +806,7 @@
                     labels: [],
                     datasets: [
                         {
-                            label: '電池溫度 (°C)',
+                            label: 'Battery Temperature (°C)',
                             borderColor: '#e67e22',
                             backgroundColor: 'rgba(230, 126, 34, 0.1)',
                             data: [],
@@ -815,7 +815,7 @@
                             borderWidth: 2
                         },
                         {
-                            label: '環境溫度 (°C)',
+                            label: 'Ambient Temperature (°C)',
                             borderColor: '#16a085',
                             backgroundColor: 'rgba(22, 160, 133, 0.1)',
                             data: [],
@@ -834,7 +834,7 @@
                     labels: [],
                     datasets: [
                         {
-                            label: '內阻 (mΩ)',
+                            label: 'Internal Resistance (mΩ)',
                             borderColor: '#9b59b6',
                             data: [],
                             tension: 0.4,
@@ -842,7 +842,7 @@
                             yAxisID: 'y'
                         },
                         {
-                            label: '熱阻 (°C/W)',
+                            label: 'Thermal Resistance (°C/W)',
                             borderColor: '#e74c3c',
                             data: [],
                             tension: 0.4,
@@ -874,7 +874,7 @@
                     labels: [],
                     datasets: [
                         {
-                            label: '流量 (L/min)',
+                            label: 'Flow Rate (L/min)',
                             borderColor: '#3498db',
                             backgroundColor: 'rgba(52, 152, 219, 0.1)',
                             data: [],
@@ -909,10 +909,10 @@
             const statusText = document.getElementById('statusText');
             if (online) {
                 indicator.className = 'status-indicator status-online';
-                statusText.textContent = '線上';
+                statusText.textContent = 'Online';
             } else {
                 indicator.className = 'status-indicator status-offline';
-                statusText.textContent = '離線';
+                statusText.textContent = 'Offline';
             }
         }
 
@@ -1128,4 +1128,5 @@
     </script>
 </body>
 </html>
+
 
